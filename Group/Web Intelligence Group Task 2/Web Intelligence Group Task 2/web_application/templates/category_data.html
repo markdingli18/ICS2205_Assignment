@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Category Data</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+  </head>
+  <body>
+    <h1>Category Data</h1>
+    <form>
+      <label for="category-select">Select a category:</label><br>
+      <select id="category-select" onchange="displayCategory(this.value)">
+        {% for category, data in data.items() %}
+          <option value="{{ category }}">{{ category }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <br>
+    <div id="category-info">
+    <script>
+      function displayCategory(category) {
+        var data = {{ data | tojson }};
+        var info = data[category];
+        var html = '<h2>' + info.category + '</h2>';
+        html += '<h3>Links:</h3>';
+        html += '<ul>';
+        for (var i = 0; i < info.links.length; i++) {
+          html += '<li><a href="' + info.links[i] + '">' + info.links[i] + '</a></li>';
+        }
+        html += '</ul>';
+        html += '<h3>Top Terms:</h3>';
+        html += '<ul>';
+        for (var i = 0; i < info.top_terms.length; i++) {
+          html += '<li>' + info.top_terms[i] + '</li>';
+        }
+        html += '</ul>';
+        document.getElementById('category-info').innerHTML
+        = html;
+    }
+    </script>
+    </div>
+    
+    <!-- Bubble Chart --> 
+    <div id="bubble-chart">
+    <h2> Category Bubble Chart: </h2>
+    <script>
+      function displayCategory(category) {
+        var data = {{ data | tojson }};
+        var info = data[category];
+        var html = '<h2>' + info.category + '</h2>';
+        html += '<h3>Links:</h3>';
+        html += '<ul>';
+        for (var i = 0; i < info.links.length; i++) {
+          html += '<li><a href="' + info.links[i] + '">' + info.links[i] + '</a></li>';
+        }
+        html += '</ul>';
+        html += '<h3>Top Terms:</h3>';
+        html += '<ul>';
+        for (var i = 0; i < info.top_terms.length; i++) {
+          html += '<li>' + info.top_terms[i] + '</li>';
+        }
+        html += '</ul>';
+        document.getElementById('category-info').innerHTML
+        = html;
+      }
+    
+      // Create Bubble Chart 
+      var bubbleData = {{ data | tojson }};
+    
+      var width = 600;
+      var height = 600;
+    
+      var svg = d3.select('#bubble-chart')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+    
+      var color = d3.scaleOrdinal(d3.schemeCategory10);
+    
+      var simulation = d3.forceSimulation(Object.keys(bubbleData).map(function(d) {
+        return {
+          name: d,
+          value: bubbleData[d].links.length,
+          links: bubbleData[d].links,
+          top_terms: bubbleData[d].top_terms
+        };
+      }))
+        .force('charge', d3.forceManyBody().strength(-5))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('x', d3.forceX().x(function(d) {
+          return d.value * 10;
+        }))
+        .force('y', d3.forceY().y(height / 2))
+        .on('tick', ticked);
+    
+      var circles = svg.selectAll('circle')
+        .data(simulation.nodes())
+        .enter()
+        .append('circle')
+        .attr('r', function(d) {
+          return d.value;
+        })
+        .attr('fill', function(d) {
+          return color(d.name);
+        })
+        .on('click', function(d) {
+          var html = '<h2>' + d.name + '</h2>';
+          html += '<h3>Links:</h3>';
+          html += '<ul>';
+          for (var i = 0; i < d.links.length; i++) {
+            html += '<li><a href="' + d.links[i] + '">' + d.links[i] + '</a></li>';
+          }
+          html += '</ul>';
+          html += '<h3>Top Terms:</h3>';
+          html += '<ul>';
+          for (var i = 0; i < d.top_terms.length; i++) {
+            html += '<li>' + d.top_terms[i] + '</li>';
+          }
+          html += '</ul>';
+          document.getElementById('category-info').innerHTML = html;
+        });
+    
+      function ticked() {
+        circles
+          .attr('cx', function(d) {
+            return d.x;
+          })
+          .attr('cy', function(d) {
+            return d.y;
+          });
+      }
+    
+    </script>
+  </div> 
+  </body>
+</html>

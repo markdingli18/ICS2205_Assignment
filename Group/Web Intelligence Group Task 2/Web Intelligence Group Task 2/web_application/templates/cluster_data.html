@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Cluster Data</title>
+  </head>
+  <body>
+    <h1>Cluster Data</h1>
+    <form>
+      <label for="cluster-select">Select a cluster:</label><br>
+      <select id="cluster-select" onchange="displayCluster(this.value)">
+        {% for cluster_id, data in data.items() %}
+          <option value="{{ cluster_id }}">{{ cluster_id }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <br>
+    <div id="cluster-info"></div>
+
+    <script>
+      function displayCluster(cluster_id) {
+        var data = {{ data | tojson }};
+        var info = data[cluster_id];
+        var html = '<h2>Cluster ' + info.cluster_id + '</h2>';
+        html += '<h3>Links:</h3>';
+        html += '<ul>';
+        for (var i = 0; i < info.links.length; i++) {
+          html += '<li><a href="' + info.links[i] + '">' + info.links[i] + '</a></li>';
+        }
+        html += '</ul>';
+        html += '<h3>Top Terms:</h3>';
+        html += '<ul>';
+        for (var i = 0; i < info.top_terms.length; i++) {
+          html +='<li>' + info.top_terms[i][0] + ' (' + info.top_terms[i][1] + ')</li>';
+        }
+        html += '</ul>';
+        document.getElementById('cluster-info').innerHTML
+        = html;
+        }
+        </script>
+
+          
+      <!-- Bubble Chart --><!-- Bubble Chart -->
+      <div id="bubble-chart"></div>
+
+      <script src="https://d3js.org/d3.v5.min.js"></script>
+      <script>
+        var width = 800;
+        var height = 600;
+        var padding = 20;
+
+        var svg = d3.select("#bubble-chart")
+          .append("svg")
+          .attr("width", width)
+          .attr("height", height);
+
+        function displayBubbleChart(data) {
+          // Set up the scales
+          var xScale = d3.scaleLinear()
+            .domain([0, d3.max(data, function(d) { return d.x; })])
+            .range([padding, width - padding]);
+
+          var yScale = d3.scaleLinear()
+            .domain([0, d3.max(data, function(d) { return d.y; })])
+            .range([height - padding, padding]);
+
+          var rScale = d3.scaleLinear()
+            .domain([0, d3.max(data, function(d) { return d.r; })])
+            .range([5, 30]);
+
+          // Add the circles
+          var circles = svg.selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("cx", function(d) { return xScale(d.x); })
+            .attr("cy", function(d) { return yScale(d.y); })
+            .attr("r", function(d) { return rScale(d.r); });
+        }
+
+        var data = {{ data | tojson }};
+        var bubbleData = [];
+        for (var cluster_id in data) {
+          var cluster = data[cluster_id];
+          bubbleData.push({
+            x: cluster.x,
+            y: cluster.y,
+            r: cluster.r
+          });
+        }
+
+        displayBubbleChart(bubbleData);
+      </script>
+   </body>
+</html>
